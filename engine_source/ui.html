@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Intelligent Compiler Optimization Engine</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#14181f;--mute:#5b6676;--line:#dfe3ea;--acc:#2f5bea;--ok:#117a4a;--okbg:#e3f6ec;--bad:#b4231f;--badbg:#fde8e7;--warn:#9a5b00;--warnbg:#fff1d6;--code:#f1f3f7;--add:#d9f3e2;--del:#fbdcdb;--vec:#e9e2ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1218;--card:#171b23;--ink:#e8ebf1;--mute:#98a2b3;--line:#2a303c;--acc:#7b9bff;--ok:#5fd39a;--okbg:#12301f;--bad:#ff8d86;--badbg:#3a1614;--warn:#f0b14a;--warnbg:#3a2c0e;--code:#10141b;--add:#143222;--del:#3c1b1a;--vec:#2a2250}}
+:root[data-theme="dark"]{--bg:#0f1218;--card:#171b23;--ink:#e8ebf1;--mute:#98a2b3;--line:#2a303c;--acc:#7b9bff;--ok:#5fd39a;--okbg:#12301f;--bad:#ff8d86;--badbg:#3a1614;--warn:#f0b14a;--warnbg:#3a2c0e;--code:#10141b;--add:#143222;--del:#3c1b1a;--vec:#2a2250}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+h1{font-size:17px;margin:0}h1 small{display:block;font-weight:400;color:var(--mute);font-size:12px}
+main{display:grid;grid-template-columns:minmax(300px,42%) minmax(0,1fr);gap:14px;padding:14px;max-width:1500px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.card h2{font-size:14px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+textarea{width:100%;min-height:340px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--code);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;tab-size:4;white-space:pre}
+select,button,input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+button{cursor:pointer}button.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+button:disabled{opacity:.5}select{max-width:100%;min-width:0}#preset{flex:1 1 180px}header .row{max-width:100%}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px 12px;font-size:13px}
+.opts label{display:flex;gap:6px;align-items:center}.opts input[type=number]{width:60px;padding:3px 6px}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:10px;-webkit-overflow-scrolling:touch}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;white-space:nowrap;padding:8px 10px;color:var(--mute)}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--acc);font-weight:600}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600}
+.APPLIED,.PASS,.ok{background:var(--okbg);color:var(--ok)}.REJECTED,.FAIL,.bad{background:var(--badbg);color:var(--bad)}.REVERTED,.SKIPPED,.INCONCLUSIVE,.warn{background:var(--warnbg);color:var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.stat b{display:block;font-size:22px}.stat span{font-size:12px;color:var(--mute)}
+pre,.code{font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--code);border-radius:8px;padding:8px;overflow-x:auto;margin:4px 0;white-space:pre}
+.opt{border:1px solid var(--line);border-radius:10px;margin:8px 0;overflow:hidden}
+.opt>summary{cursor:pointer;padding:8px 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .body{padding:0 10px 10px}
+.chk{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:13px;margin:6px 0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.d-add{background:var(--add)}.d-del{background:var(--del)}.d-vec{background:var(--vec)}.l{display:block;min-height:1.5em}.mk{opacity:.45}
+.diag{border-left:4px solid var(--bad);background:var(--badbg);padding:8px 10px;border-radius:6px;margin:6px 0;font-size:13px}.diag.warning{border-color:var(--warn);background:var(--warnbg)}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}.scroll{overflow-x:auto}
+details.tree summary{cursor:pointer}details.tree{margin-left:14px;font:12.5px ui-monospace,monospace}
+.mute{color:var(--mute)}.stage{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0}.stage .pill{background:var(--code)}
+h3{font-size:15px;margin:14px 0 4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Intelligent Compiler Optimization Engine<small>PROGRAM → ANALYZE → CHECK SAFETY → OPTIMIZE IF SAFE → VERIFY → EXPLAIN</small></h1>
+  <div class="row" style="margin:0"><select id="backend" title="Where the analysis runs"><option value="js">In-browser engine</option><option value="c">C backend (/api/analyze)</option></select><button id="theme">◐ Theme</button></div>
+</header>
+<main>
+  <section class="card">
+    <h2>1 · Write C code</h2>
+    <div class="row"><select id="preset"></select><button class="primary" id="run">Check optimizations ▶</button></div>
+    <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div id="diags"></div>
+    <details class="row"><summary>Options</summary>
+      <div class="opts" id="opts"></div></details>
+    <p class="mute" style="font-size:12px;margin:6px 0 0">Supported subset: <code>int</code>, <code>int *</code> (+<code>restrict</code>), arrays, functions, <code>if/for/while</code>, <code>malloc/free</code>. Results re-run automatically while you type.</p>
+  </section>
+  <section class="card" id="out"><h2>2 · Results</h2><p class="mute">Pick an example or type code.</p></section>
+</main>
+<script>
+/*ENGINE*/
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PRESETS={
+"Doc example: calculate (pointers, MAY_ALIAS)":`int calculate(int *a, int *b, int n) {
+    int x = 10 * 20;
+    for (int i = 0; i < n; i++) {
+        a[i] = b[i] + x;
+    }
+    return x;
+}`,
+"Constant folding (report example 1)":`int main() {
+    int x = 10 + 20;
+    int y = x * 2;
+    return y;
+}`,
+"Vectorization allowed (restrict)":`void vadd(int * restrict c, int * restrict a, int * restrict b, int n) {
+    for (int i = 0; i < n; i++)
+        c[i] = a[i] + b[i];
+}`,
+"Vectorization with local arrays":`int main() {
+    int a[100]; int b[100]; int c[100];
+    for (int i = 0; i < 100; i++) { a[i] = i; b[i] = 2 * i; }
+    for (int i = 0; i < 100; i++)
+        c[i] = a[i] + b[i];
+    return c[99];
+}`,
+"Loop-carried dependence (rejected)":`int prefix(int *a, int n) {
+    for (int i = 1; i < n; i++)
+        a[i] = a[i - 1] + a[i];
+    return a[n - 1];
+}`,
+"Reduction (sum)":`int sum(int * restrict a, int n) {
+    int s = 0;
+    for (int i = 0; i < n; i++)
+        s += a[i];
+    return s;
+}`,
+"Escape analysis (malloc)":`int fine() {
+    int *p = malloc(10 * sizeof(int));
+    for (int i = 0; i < 10; i++) p[i] = i * i;
+    int r = p[3] + p[4];
+    free(p);
+    return r;
+}
+int *leaks() {
+    int *p = malloc(16);
+    p[0] = 1;
+    return p;
+}`,
+"Dead branch + unreachable code":`int pick(int n) {
+    int k = 3;
+    if (k > 5) { n = n * 100; }
+    else { n = n + 1; }
+    return n;
+}`,
+"Matrix multiply (cache analysis)":`void mat(int * restrict a, int * restrict b, int * restrict c, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++) {
+            int s = 0;
+            for (int k = 0; k < n; k++)
+                s += a[i * n + k] * b[k * n + j];
+            c[i * n + j] = s;
+        }
+}`,
+"Syntax error (auto-fix demo)":`int main() {
+    int total = 0;
+    for (int i = 0; i < 10; i++) {
+        totl += i;
+    }
+    return total
+}`
+};
+const OPTDEF=[["constFold","Constant folding",1],["escapeOpt","Heap→stack (escape)",1],["unroll","Loop unrolling",1],["unrollFactor","Unroll factor",4],["vectorize","Auto-vectorization",1],["vectorWidth","Vector width",4],["regs","Scalar registers",6],["vregs","Vector registers",4],["dceVars","Remove dead user variables",0],["verify","Verify correctness",1]];
+const opts={};OPTDEF.forEach(([k,,d])=>opts[k]=typeof d==='number'&&k.match(/Factor|Width|regs/i)?d:!!d);
+OPTDEF.forEach(([k,l,d])=>{const num=/Factor|Width|regs/i.test(k);const el=document.createElement('label');el.innerHTML=num?`${l} <input type="number" min="2" max="16" value="${d}" data-k="${k}">`:`<input type="checkbox" data-k="${k}" ${d?'checked':''}> ${l}`;$('#opts').append(el)});
+$('#opts').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;opts[k]=e.target.type==='checkbox'?e.target.checked:+e.target.value;schedule()});
+Object.keys(PRESETS).forEach(k=>{const o=document.createElement('option');o.textContent=k;$('#preset').append(o)});
+$('#preset').onchange=()=>{$('#src').value=PRESETS[$('#preset').value];run()};
+$('#theme').onclick=()=>{const r=document.documentElement;const dark=getComputedStyle(r).getPropertyValue('--bg').trim()==='#0f1218';r.dataset.theme=dark?'light':'dark'};
+$('#src').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.setRangeText('    ',s,t.selectionEnd,'end');schedule()}});
+let timer;function schedule(){clearTimeout(timer);timer=setTimeout(run,450)}
+$('#src').addEventListener('input',schedule);$('#run').onclick=run;
+let R=null,tab='opt',fnIdx=0;
+async function run(){
+  const src=$('#src').value;
+  try{
+    if($('#backend').value==='c'){const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:src,options:opts})});R=await r.json()}
+    else R=COE.compile(src,opts);
+  }catch(e){R={ok:false,diagnostics:[{level:'error',line:0,col:0,message:'Engine error: '+e.message,hint:$('#backend').value==='c'?'Start the C server (./coe_server) or switch to the in-browser engine.':''}]}}
+  render();
+}
+function renderDiags(){
+  $('#diags').innerHTML=(R.diagnostics||[]).map((d,i)=>`<div class="diag ${d.level}"><b>${d.level.toUpperCase()}</b> line ${d.line}:${d.col} – ${esc(d.message)}${d.source?`<pre>${esc(d.source)}\n${' '.repeat(Math.max(0,d.col-1))}^</pre>`:''}${d.hint?`<div>💡 ${esc(d.hint)}</div>`:''}${d.fix?`<button data-fix="${i}">Apply suggested fix</button>`:''}</div>`).join('');
+  document.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const f=R.diagnostics[+b.dataset.fix].fix,t=$('#src');t.value=t.value.slice(0,f.from)+f.text+t.value.slice(f.to);run()});
+}
+function pill(s){return `<span class="pill ${s}">${s}</span>`}
+function diff(a,b){ // LCS line diff
+  const n=a.length,m=b.length,L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=a[i].t.trim()===b[j].t.trim()?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const A=[],B=[];let i=0,j=0;
+  while(i<n&&j<m){if(a[i].t.trim()===b[j].t.trim()){A.push([a[i],'']);B.push([b[j],'']);i++;j++}else if(L[i+1][j]>=L[i][j+1]){A.push([a[i],'d-del']);B.push([null,'']);i++}else{A.push([null,'']);B.push([b[j],b[j].k==='vec'?'d-vec':'d-add']);j++}}
+  while(i<n){A.push([a[i++],'d-del']);B.push([null,''])}while(j<m){A.push([null,'']);B.push([b[j],b[j].k==='vec'?'d-vec':'d-add']);j++}
+  const f=rows=>rows.map(([l,c])=>`<span class="l ${c} ${l&&l.k==='marker'?'mk':''}">${l?esc(l.t):''}</span>`).join('');
+  return `<div class="cols"><div><b>Before</b><pre>${f(A)}</pre></div><div><b>After</b><pre>${f(B)}</pre></div></div>`;
+}
+function checks(c){return c.length?`<div class="chk">${c.map(x=>`<span class="pill ${x.ok?'ok':'bad'}">${x.ok?'PASS':'FAIL'}</span><span><b>${esc(x.check)}</b><br><span class="mute">${esc(x.detail)}</span></span>`).join('')}</div>`:''}
+function optCard(e,open){const sn=e.before.length>1||e.after.length>1;
+  return `<details class="opt" ${open?'open':''}><summary>${pill(e.status)} <b>${esc(e.pass)}</b> <span class="mute">${esc(e.target)}</span></summary><div class="body">
+  ${checks(e.safety)}<div><b>Reason:</b> ${esc(e.reason).split('  |  ').join('<br>• ')}</div>
+  ${e.before.length||e.after.length?(sn?`<div class="cols"><div><b>Before</b><pre>${esc(e.before.join('\n'))}</pre></div><div><b>After</b><pre>${esc(e.after.join('\n')||'(unchanged)')}</pre></div></div>`:`<pre>${esc(e.before[0]||'')}   →   ${esc(e.after[0]||'')}</pre>`):''}
+  <div><b>Decision:</b> ${esc(e.decision)}</div></div></details>`}
+function tree(n,open){return n.c.length?`<details class="tree" ${open?'open':''}><summary>${esc(n.t)}</summary>${n.c.map(x=>tree(x,false)).join('')}</details>`:`<div style="margin-left:14px;font:12.5px ui-monospace,monospace">${esc(n.t)}</div>`}
+const TABS=[['opt','Optimizations'],['ir','IR before / after'],['ana','Analyses'],['be','Backend'],['ver','Verification'],['pipe','Pipeline'],['rep','Report']];
+function render(){
+  renderDiags();
+  const out=$('#out');
+  if(!R.ok){out.innerHTML=`<h2>2 · Results</h2><p class="bad pill">Compilation stopped</p><p class="mute">Fix the error(s) shown under the editor; the engine reports the exact line, a hint and, when possible, a one-click fix.</p>`;return}
+  if(fnIdx>=R.functions.length)fnIdx=0;
+  const F=R.functions[fnIdx],S=R.summary;
+  let h=`<h2>2 · Results</h2><div class="stats"><div class="stat"><b>${S.applied}</b><span>applied</span></div><div class="stat"><b>${S.rejected}</b><span>rejected (unsafe / n.a.)</span></div><div class="stat"><b>${S.reverted}</b><span>rolled back</span></div><div class="stat"><b>${S.tests}</b><span>tests passed</span></div><div class="stat"><b>${S.failed}</b><span>tests failed</span></div></div>`;
+  if(R.functions.length>1)h+=`<div class="row">Function: <select id="fnsel">${R.functions.map((f,i)=>`<option value="${i}" ${i===fnIdx?'selected':''}>${esc(f.name)}</option>`).join('')}</select></div>`;
+  h+=`<div class="tabs">${TABS.map(([k,l])=>`<button data-t="${k}" class="${k===tab?'on':''}">${l}</button>`).join('')}</div><div id="pane"></div>`;
+  out.innerHTML=h;
+  $('#fnsel')&&($('#fnsel').onchange=e=>{fnIdx=+e.target.value;render()});
+  out.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+  $('#pane').innerHTML=PANES[tab](F);
+}
+const PANES={
+opt:F=>`<p class="mute">Every opportunity is listed with the safety checks that were evaluated. Anything the compiler could not prove safe is <b>rejected</b> and the original code is kept.</p>`+F.optimizations.map((e,i)=>optCard(e,e.status!=='APPLIED'||/Loop|Vector|Heap/.test(e.pass))).join('')||'<p>No optimization opportunities found.</p>',
+ir:F=>diff(F.irBefore,F.irAfter)+(F.metrics&&F.metrics.before.instr?`<p>Dynamic IR instructions over ${F.metrics.tests} test runs: <b>${F.metrics.before.instr} → ${F.metrics.after.instr}</b> (${F.metrics.changePct}%). <span class="mute">Experimental measurement of the reference interpreter – not a guaranteed speed-up on real hardware.</span></p>`:''),
+ana:F=>{let h='<h3>Alias analysis</h3>';
+  h+=F.alias.pairs.length?`<div class="scroll"><table><tr><th>Pointer A</th><th>Pointer B</th><th>Result</th><th>Why</th></tr>${F.alias.pairs.map(p=>`<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td><span class="pill ${p.result==='NO_ALIAS'?'ok':p.result==='MUST_ALIAS'?'warn':'bad'}">${p.result}</span></td><td>${esc(p.reason)}</td></tr>`).join('')}</table></div>`:'<p class="mute">Fewer than two pointers.</p>';
+  h+='<h3>Escape analysis</h3>'+(F.escape.length?`<div class="scroll"><table><tr><th>Object</th><th>Kind</th><th>Status</th><th>Reason</th></tr>${F.escape.map(e=>`<tr><td>${esc(e.object)}</td><td>${e.kind}</td><td><span class="pill ${e.status==='NO_ESCAPE'?'ok':'bad'}">${e.status}</span></td><td>${esc(e.reason)}</td></tr>`).join('')}</table></div>`:'<p class="mute">No locally created objects.</p>');
+  h+='<h3>Loops &amp; dependence analysis</h3>'+(F.loops.length?F.loops.map(l=>`<details class="opt" open><summary><b>${l.kind} loop, line ${l.line}</b> ${l.canonical?`<span class="mute">i=${l.init===null?'?':l.init}; ${l.var} ${l.cmp} ${l.bound}; step ${l.step}; trips ${l.tripCount===null?'unknown':l.tripCount}</span>`:`<span class="pill warn">not canonical</span>`}</summary><div class="body">${l.dependences?`<div class="scroll"><table><tr><th>Access 1</th><th>Access 2</th><th>Dependence</th><th>Detail</th></tr>${l.dependences.map(d=>`<tr><td>${esc(d.a)}</td><td>${esc(d.b)}</td><td><span class="pill ${d.type==='NONE'||d.type==='INDEPENDENT'?'ok':'bad'}">${d.type}${d.distance!=null&&d.type==='CARRIED'?' d='+d.distance:''}</span></td><td>${esc(d.detail)}</td></tr>`).join('')||'<tr><td colspan=4>no memory write pairs</td></tr>'}</table></div>${l.scalarDeps.length?'<p>Scalar loop-carried: '+l.scalarDeps.map(esc).join('; ')+'</p>':''}<p>Verdict: <span class="pill ${l.parallel?'ok':'bad'}">${l.parallel?'iterations independent':'iterations dependent'}</span></p>`:`<p class="mute">${l.canonical?'Not an innermost straight-line loop.':esc(l.why.join('; '))}</p>`}</div></details>`).join(''):'<p class="mute">No loops.</p>');
+  h+='<h3>Control-flow graph</h3><div class="scroll"><table><tr><th>Block</th><th>Instructions</th><th>Successors</th><th>Loop depth</th></tr>'+F.cfg.blocks.map(b=>`<tr><td>${b.id}</td><td><pre>${esc(b.instrs.join('\n'))}</pre></td><td>${b.succ.join(', ')||'—'}</td><td>${b.depth}</td></tr>`).join('')+`</table></div><p class="mute">Back edges: ${F.cfg.backEdges.join(', ')||'none'}</p>`;
+  h+='<h3>Liveness (named variables)</h3><div class="scroll"><table><tr><th>Block</th><th>Live-in</th><th>Live-out</th></tr>'+F.liveness.map(b=>`<tr><td>${b.id}</td><td>${b.in.join(', ')}</td><td>${b.out.join(', ')}</td></tr>`).join('')+'</table></div>';return h},
+be:F=>{const a=F.regalloc.after,b=F.regalloc.before;
+  let h=`<h3>Register allocation (graph colouring, ${a.K} scalar + ${a.KV} vector registers)</h3><div class="stats"><div class="stat"><b>${b.pressure}→${a.pressure}</b><span>max live scalars (before→after)</span></div><div class="stat"><b>${a.spills.length}</b><span>spilled variables</span></div><div class="stat"><b>${a.usedRegs}</b><span>registers used</span></div></div>`;
+  h+=`<div class="scroll"><table><tr><th>Variable</th><th>Register</th></tr>${Object.entries(a.mapping).filter(([k])=>k[0]!=='%'||true).map(([k,v])=>`<tr><td>${esc(k)}</td><td><span class="pill ${v[0]==='['?'bad':'ok'}">${v}</span></td></tr>`).join('')}</table></div><details><summary>IR after register assignment</summary><pre>${esc(a.allocatedIR.join('\n'))}</pre></details>`;
+  h+='<h3>Cache behaviour (static, qualitative)</h3>'+(F.cache.length?F.cache.map(c=>`<details class="opt" open><summary><b>loop, line ${c.line}</b> <span class="pill ${c.verdict==='CACHE_FRIENDLY'?'ok':c.verdict==='CACHE_UNFRIENDLY'?'bad':'warn'}">${c.verdict}</span></summary><div class="body">${c.accesses.length?`<table><tr><th>Access</th><th>Pattern</th><th>Stride</th><th>Est. misses / access</th><th>Note</th></tr>${c.accesses.map(a=>`<tr><td>${esc(a.ref)} (${a.kind})</td><td>${a.pattern}</td><td>${a.stride===null?'—':esc(a.stride)}</td><td>${a.estMissPerAccess}</td><td>${esc(a.note)}</td></tr>`).join('')}</table>`:''}<p>💡 ${esc(c.suggestion)}</p></div></details>`).join(''):'<p class="mute">No loops.</p>')+'<p class="mute">Assumes 4-byte ints and 64-byte cache lines. This is pattern classification, not a hardware cache simulation.</p>';return h},
+ver:F=>{const v=F.verification;if(v.status==='DISABLED')return'<p>Verification is turned off in the options.</p>';
+  return `<p>${pill(v.status)} ${v.passed} passed · ${v.failed} failed · ${v.skipped} skipped. The optimized IR and the original IR were both executed by the reference interpreter on the same inputs; return value <i>and</i> final memory of all pointer arguments must match.${v.note?'<br><b>'+esc(v.note)+'</b>':''}</p><div class="scroll"><table><tr><th>Input</th><th>Status</th><th>Original</th><th>Optimized</th><th>IR instr. (orig→opt)</th></tr>${v.cases.map(c=>`<tr><td>${esc(c.label)}</td><td>${pill(c.status)}</td><td>${esc(c.expected??'')}</td><td>${esc(c.got??c.detail??'')}</td><td>${c.instrBefore!=null?c.instrBefore+' → '+c.instrAfter:''}</td></tr>`).join('')}</table></div>`},
+pipe:F=>{const T=R.tokens;return R.stages.map((s,i)=>`<details class="opt" ${i===0?'open':''}><summary><b>${esc(s.name)}</b> <span class="mute">→ ${esc(s.out)}</span></summary><div class="body">${STAGE[i](F)}</div></details>`).join('')},
+rep:F=>`<pre>${esc(R.reportText)}</pre><div class="row"><button id="dl">Download report (.txt)</button></div>`
+};
+const STAGE=[
+F=>`<p>Input: the source text. Output: a token stream.</p><div class="scroll"><table><tr><th>Type</th><th>Text</th><th>Line:col</th></tr>${R.tokens.sample.map(t=>`<tr><td>${t.type}</td><td><code>${esc(t.text)}</code></td><td>${t.line}:${t.col}</td></tr>`).join('')}</table></div><p class="mute">First ${R.tokens.sample.length} of ${R.tokens.count} tokens. Errors here: unexpected characters, unterminated comments.</p>`,
+F=>`<p>Input: tokens. Output: abstract syntax tree. Syntax errors stop here with a line, a hint and a fix.</p>${tree(R.ast,true)}`,
+F=>`<p>Names are resolved, types checked (int vs pointer), shadowed names are renamed, and warnings are produced (unused variable, missing return, side effects in &amp;&amp;). Typos get “did you mean …?”.</p>${R.diagnostics.map(d=>`<div class="diag ${d.level}">${d.level} line ${d.line}: ${esc(d.message)}</div>`).join('')||'<p class="mute">No diagnostics.</p>'}`,
+F=>`<p>Input: AST. Output: three-address code (one operation per instruction, explicit labels and jumps; loop bodies are bracketed by markers so later passes can find them).</p><pre>${esc(F.irBefore.map(l=>l.t).join('\n'))}</pre>`,
+F=>`<p>Input: IR. Output: basic blocks, edges, dominators, back edges (= natural loops).</p>${PANES.ana(F).split('<h3>Control-flow graph</h3>')[1].split('<h3>Liveness')[0]}`,
+F=>`<p>Alias, escape, dependence and liveness results are produced <i>before</i> any transformation and consumed by the safety checks of the next stage.</p>${PANES.ana(F)}`,
+F=>PANES.opt(F),F=>PANES.be(F),F=>PANES.ver(F),
+F=>`<p>The explanation trace for every applied and rejected decision.</p><pre>${esc(R.reportText)}</pre>`];
+document.addEventListener('click',e=>{if(e.target.id==='dl'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([R.reportText],{type:'text/plain'}));a.download='optimization_report.txt';a.click()}});
+$('#src').value=PRESETS[Object.keys(PRESETS)[0]];run();
+</script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compiler Design Lab</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a30;--panel2:#18223e;--ink:#e7ecf8;--mute:#93a0bd;--line:#26335a;--acc:#4fd1c5;--acc2:#8b7bff;--ok:#4ade80;--okbg:#10301f;--bad:#ff7b72;--badbg:#3b1717;--warn:#fbbf24;--warnbg:#3a2d0b;--code:#0d1428;--add:#12341f;--del:#3d1a1a;--vec:#2a2250;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f3f5fb;--panel:#fff;--panel2:#f0f3fb;--ink:#141a2e;--mute:#5a6580;--line:#d9dfef;--acc:#0e8f84;--acc2:#5b46e6;--ok:#12803f;--okbg:#e2f6ea;--bad:#b4231f;--badbg:#fde8e7;--warn:#9a5b00;--warnbg:#fff1d6;--code:#eef1f9;--add:#d9f3e2;--del:#fbdcdb;--vec:#e9e2ff}}
+:root[data-theme="light"]{--bg:#f3f5fb;--panel:#fff;--panel2:#f0f3fb;--ink:#141a2e;--mute:#5a6580;--line:#d9dfef;--acc:#0e8f84;--acc2:#5b46e6;--ok:#12803f;--okbg:#e2f6ea;--bad:#b4231f;--badbg:#fde8e7;--warn:#9a5b00;--warnbg:#fff1d6;--code:#eef1f9;--add:#d9f3e2;--del:#fbdcdb;--vec:#e9e2ff}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+h1{font-size:18px;margin:0}h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 small{display:block;font-size:12px;font-weight:400;color:var(--mute);-webkit-text-fill-color:var(--mute)}
+.phases{display:flex;gap:6px;overflow-x:auto;padding:10px 16px 0;-webkit-overflow-scrolling:touch}
+.phases button{flex:1 0 auto;min-width:150px;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer}
+.phases button b{display:block;font-size:14px}.phases button span{font-size:12px;color:var(--mute)}
+.phases button.on{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 35%,transparent);background:var(--panel2)}
+.phases button i{font-style:normal;font-size:11px;color:var(--acc);letter-spacing:.06em;text-transform:uppercase;display:block}
+main{padding:14px 16px;max-width:1500px;margin:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;min-width:0}
+.card h2{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.lead{color:var(--mute);margin:0 0 10px}
+.grid2{display:grid;grid-template-columns:minmax(300px,38%) minmax(0,1fr);gap:12px}@media(max-width:950px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2.ga{grid-template-columns:minmax(260px,32%) minmax(0,1fr)}.grid2.gb{grid-template-columns:minmax(0,1fr) minmax(260px,34%)}@media(max-width:950px){.grid2.ga,.grid2.gb{grid-template-columns:minmax(0,1fr)}}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+select,button,input,textarea{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:100%}
+button{cursor:pointer}button.pri{background:var(--acc);color:#04120f;border-color:var(--acc);font-weight:700}button:disabled{opacity:.45;cursor:default}
+textarea,input[type=text]{width:100%;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--code)}
+textarea{min-height:150px;resize:vertical;white-space:pre}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.pill{display:inline-block;padding:0 9px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.ok{background:var(--okbg);color:var(--ok)}.bad{background:var(--badbg);color:var(--bad)}.warn{background:var(--warnbg);color:var(--warn)}.info{background:var(--panel2);color:var(--acc)}
+pre,.code{font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--code);border-radius:8px;padding:8px;overflow:auto;margin:4px 0;white-space:pre}
+table{border-collapse:collapse;font-size:13px}th,td{border:1px solid var(--line);padding:3px 8px;text-align:left;vertical-align:top}th{background:var(--panel2);position:sticky;top:0}
+.scroll{overflow:auto;max-width:100%}
+.mute{color:var(--mute)}.small{font-size:12.5px}
+.msg{border-left:4px solid var(--acc);background:var(--panel2);padding:6px 10px;border-radius:6px;margin:8px 0}.msg.bad{border-color:var(--bad)}.msg.warn{border-color:var(--warn)}.msg.ok{border-color:var(--ok)}
+svg{max-width:100%;height:auto}
+svg text{fill:var(--ink);font-family:ui-monospace,Menlo,Consolas,monospace}
+.sec{display:none}.sec.on{display:block}
+.tk{display:inline-block;margin:2px;padding:2px 8px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font:12.5px ui-monospace,monospace}
+.tk b{color:var(--acc2);font-weight:600;margin-right:6px;font-size:11px}
+.chars{font:20px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.04em;overflow-x:auto;white-space:pre;padding:6px 2px}
+.chars span{display:inline-block;min-width:.62em;border-bottom:3px solid transparent;text-align:center}
+.chars .done{color:var(--mute)}.chars .cur{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 22%,transparent)}.chars .tok{border-color:var(--acc2)}
+.stages{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.stages button{flex:0 0 auto;font-size:12.5px;padding:5px 10px;border-radius:99px}
+.stages button.on{background:var(--acc2);color:#fff;border-color:var(--acc2)}
+.irrow{display:block;padding:0 6px;border-radius:4px;white-space:pre}.irrow.add{background:var(--add)}.irrow.del{background:var(--del);text-decoration:line-through;opacity:.8}.irrow.vec{background:var(--vec)}.irrow.mk{opacity:.45}.irrow.hl,.srow.hl{outline:2px solid var(--warn);background:var(--warnbg)}
+.srow{display:block;white-space:pre;padding:0 6px;border-radius:4px;cursor:default}.srow i{color:var(--mute);font-style:normal;display:inline-block;width:2.2em;user-select:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.legend span{display:inline-flex;gap:5px;align-items:center;font-size:12px}.legend em{width:14px;height:14px;border-radius:50%;display:inline-block}
+details>summary{cursor:pointer;color:var(--acc)}
+.node:hover{filter:brightness(1.2)}
+.kbd{font:12px ui-monospace,monospace;background:var(--code);border:1px solid var(--line);border-radius:5px;padding:0 5px}
+input[type=range]{padding:0;width:100%}
+.cellbad{background:var(--badbg);color:var(--bad);font-weight:700}.cellok{background:var(--okbg)}
+.tree svg{background:var(--code);border-radius:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Compiler Design Lab</span><small>watch every phase of a compiler think — lexer · parser · optimizer · code generator</small></h1>
+  <div class="row" style="margin:0"><button id="theme">◐ Theme</button></div>
+</header>
+<div class="phases" id="phases">
+  <button data-p="lex" class="on"><i>Phase 1 · Lexical analysis</i><b>Automaton Animator</b><span>DFA reads characters, maximal munch</span></button>
+  <button data-p="syn"><i>Phase 2 · Syntax analysis</i><b>Grammar Workbench</b><span>FIRST/FOLLOW · LL(1) · SLR(1) · parse trees</span></button>
+  <button data-p="opt"><i>Phase 3 · IR &amp; optimization</i><b>Optimizer Time Machine</b><span>scrub through passes, CFG, source↔IR</span></button>
+  <button data-p="reg"><i>Phase 4 · Code generation</i><b>Register Colouring</b><span>interference graph, simplify / select</span></button>
+</div>
+<main>
+
+<!-- ============ PHASE 1 : LEXER ============ -->
+<section class="sec on" id="s-lex">
+  <div class="card">
+    <h2>Lexical analysis · finite automata</h2>
+    <p class="lead">A lexer is a deterministic finite automaton. Type some code and press <b>Play</b>: the automaton reads one character at a time, follows an edge, and — using <b>maximal munch</b> — remembers the last accepting state so it can <b>backtrack</b> when it runs into a dead end.</p>
+    <div class="row"><input type="text" id="lexIn" value="count1 = x2 <= 12e+3 &amp;&amp; !done;" style="flex:1 1 320px">
+      <select id="lexPreset"></select></div>
+    <div class="row"><button id="lexReset">⏮ Reset</button><button id="lexPrev">◀ Step</button><button class="pri" id="lexPlay">▶ Play</button><button id="lexNext">Step ▶</button>
+      <label class="small mute">speed <input type="range" id="lexSpeed" min="1" max="10" value="5" style="width:120px"></label><span class="mute small" id="lexCount"></span></div>
+    <div class="chars" id="lexChars"></div>
+    <div class="msg" id="lexMsg">Press Play or Step.</div>
+  </div>
+  <div class="grid3">
+    <div class="card"><h2>Automaton A · identifiers &amp; keywords</h2><div id="dfaA"></div><p class="small mute">After the automaton accepts, the lexeme is looked up in the <b>keyword table</b>: <code>int</code>, <code>for</code>, <code>while</code> … become keyword tokens, everything else stays an identifier.</p></div>
+    <div class="card"><h2>Automaton B · numbers</h2><div id="dfaB"></div><p class="small mute">Integer, float (<code>3.14</code>), and exponent (<code>12e+3</code>) forms. Accepting states are double circles.</p></div>
+  </div>
+  <div class="card"><h2>Automaton C · operators &amp; punctuation</h2><div class="scroll" id="dfaC"></div></div>
+  <div class="card"><h2>Token stream produced</h2><div id="lexTokens" class="mute">no tokens yet</div></div>
+</section>
+
+<!-- ============ PHASE 2 : GRAMMAR ============ -->
+<section class="sec" id="s-syn">
+  <div class="card">
+    <h2>Syntax analysis · grammar workbench</h2>
+    <p class="lead">Type any context-free grammar (symbols separated by spaces, <code>ε</code> or <code>eps</code> for empty, <code>|</code> for alternatives). The lab computes <b>FIRST / FOLLOW</b>, builds the <b>LL(1)</b> table and the <b>SLR(1)</b> automaton, flags conflicts, and parses your sentence step by step while the <b>parse tree grows</b>.</p>
+    <div class="grid2">
+      <div>
+        <div class="row"><select id="gPreset"></select></div>
+        <textarea id="gText" spellcheck="false"></textarea>
+        <div class="row"><button id="gLR">Eliminate left recursion</button><button id="gLF">Left-factor</button></div>
+        <div class="small mute">Input sentence (tokens separated by spaces):</div>
+        <input type="text" id="gInput" value="id + id * id">
+        <div class="row"><label><input type="radio" name="gm" value="ll" checked> LL(1) top-down</label><label><input type="radio" name="gm" value="lr"> SLR(1) bottom-up</label></div>
+        <div id="gSummary"></div>
+      </div>
+      <div>
+        <div class="card" style="margin:0"><h2>Parse trace</h2>
+          <div class="row"><button id="gReset">⏮</button><button id="gPrev">◀</button><button class="pri" id="gPlay">▶ Play</button><button id="gNext">▶</button>
+            <input type="range" id="gSlider" min="0" max="0" value="0" style="flex:1 1 140px;width:auto"><span class="small mute" id="gStepLbl"></span></div>
+          <div class="msg" id="gAction"></div>
+          <div class="tree scroll" id="gTree"></div>
+          <div class="scroll" style="max-height:260px" id="gTrace"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="card"><h2>Productions · FIRST · FOLLOW</h2><div class="scroll" id="gFF"></div></div>
+    <div class="card" style="grid-column:1/-1"><h2>LL(1) parsing table</h2><div class="scroll" id="gLL"></div></div>
+  </div>
+  <div class="card"><h2>SLR(1) automaton &amp; table</h2><div id="gLRinfo"></div><div class="scroll" id="gLRtab"></div><div class="grid3" id="gStates" style="margin-top:10px"></div></div>
+</section>
+
+<!-- ============ SHARED C SOURCE (phases 3 & 4) ============ -->
+<div id="compWrap" style="display:none">
+  <div class="card">
+    <h2>C source (runs through the real optimizing engine)</h2>
+    <div class="row"><select id="cPreset"></select><select id="cFn" style="display:none"></select><span id="cStatus" class="small"></span></div>
+    <textarea id="cSrc" spellcheck="false" style="min-height:130px"></textarea>
+    <div id="cDiag"></div>
+  </div>
+
+  <!-- ============ PHASE 3 : TIME MACHINE ============ -->
+  <section class="sec" id="s-opt">
+    <div class="card">
+      <h2>Optimizer time machine</h2>
+      <p class="lead">Scrub through the optimizer's passes. Each stage shows the intermediate code, the control-flow graph and the decisions made there. <b>Hover</b> a C line (or an IR line) and its counterpart lights up.</p>
+      <div class="stages" id="tmStages"></div>
+      <div class="row"><button id="tmPrev">◀</button><button class="pri" id="tmPlay">▶ Play</button><button id="tmNext">▶</button><input type="range" id="tmSlider" min="0" max="0" value="0" style="flex:1 1 200px;width:auto"></div>
+      <div class="msg" id="tmNote"></div>
+    </div>
+    <div class="grid2 ga">
+      <div class="card"><h2>C source</h2><div id="tmSrc" class="code" style="max-height:420px"></div>
+        <h2 style="margin-top:12px">Static IR size per stage</h2><div id="tmChart"></div></div>
+      <div class="card"><h2>Intermediate code <span class="small mute" id="tmDiffNote"></span></h2><div id="tmIR" class="code" style="max-height:420px"></div></div>
+    </div>
+    <div class="grid2 gb">
+      <div class="card"><h2>Control-flow graph at this stage <span class="small mute">(red dashed = back edge → loop)</span></h2><div class="scroll" id="tmCFG"></div></div>
+      <div class="card"><h2>Decisions made at this stage</h2><div id="tmEvents"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ PHASE 4 : REGISTER COLOURING ============ -->
+  <section class="sec" id="s-reg">
+    <div class="card">
+      <h2>Register allocation · graph colouring</h2>
+      <p class="lead">Two variables that are alive at the same time <b>interfere</b> and cannot share a register. Allocation = colouring the interference graph with K colours (Chaitin–Briggs): <b>simplify</b> (remove nodes with fewer than K neighbours), possibly mark a <b>spill candidate</b>, then <b>select</b> colours while popping the stack. Change K and watch spills appear.</p>
+      <div class="row">
+        <label>K registers <input type="range" id="rK" min="2" max="12" value="4" style="width:150px"> <b id="rKv">4</b></label>
+        <label><input type="radio" name="rv" value="after" checked> after optimization</label><label><input type="radio" name="rv" value="before"> before optimization</label>
+        <label><input type="checkbox" id="rTemps"> show compiler temporaries</label>
+      </div>
+      <div class="row"><button id="rReset">⏮</button><button id="rPrev">◀</button><button class="pri" id="rPlay">▶ Play</button><button id="rNext">▶</button><input type="range" id="rSlider" min="0" max="0" value="0" style="flex:1 1 200px;width:auto"><span class="small mute" id="rLbl"></span></div>
+      <div class="msg" id="rMsg"></div>
+    </div>
+    <div class="grid2 gb">
+      <div class="card"><h2>Interference graph</h2><div class="scroll" id="rGraph"></div><div class="legend" id="rLegend"></div></div>
+      <div class="card"><h2>Stack &amp; result</h2><div id="rStack"></div></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<script>
+/*ENGINE*/
+</script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function player(btn,len,go,speed){let t=null;const stop=()=>{clearInterval(t);t=null;btn.textContent='▶ Play'};
+  btn.onclick=()=>{if(t){stop();return}if(go.at()>=len()-1)go.set(0);btn.textContent='⏸ Pause';t=setInterval(()=>{if(go.at()>=len()-1){stop();return}go.set(go.at()+1)},speed())};return stop}
+/* ============================================================ PHASE tabs */
+$('#phases').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;showPhase(b.dataset.p)});
+function showPhase(p){$$('#phases button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
+  ['lex','syn','opt','reg'].forEach(k=>$('#s-'+k).classList.toggle('on',k===p));
+  $('#compWrap').style.display=(p==='opt'||p==='reg')?'block':'none';
+  if(p==='opt'||p==='reg')compileNow();}
+$('#theme').onclick=()=>{const r=document.documentElement;const dark=getComputedStyle(r).getPropertyValue('--bg').trim()==='#0b1020';r.dataset.theme=dark?'light':'dark'};
+
+/* ============================================================ PHASE 1 : LEXER AUTOMATON */
+const isL=c=>/[A-Za-z_]/.test(c),isD=c=>/[0-9]/.test(c);
+const KEYWORDS=new Set(['int','char','short','long','float','double','unsigned','signed','void','bool','const','for','while','do','if','else','return','break','continue','switch','case','default','sizeof','restrict']);
+function dfaNext(s,c){
+  switch(s){
+    case'S0':if(isL(c))return'ID';if(isD(c))return'INT';
+      if(c==='<')return'LT';if(c==='>')return'GT';if(c==='=')return'EQ';if(c==='!')return'NOT';if(c==='&')return'AMP';if(c==='|')return'BAR';if(c==='+')return'PLUS';if(c==='-')return'MINUS';
+      if('*/%'.includes(c))return'ARITH';if('^~(){}[];,:'.includes(c))return'PUNCT';return null;
+    case'ID':return(isL(c)||isD(c))?'ID':null;
+    case'INT':if(isD(c))return'INT';if(c==='.')return'DOT';if(c==='e'||c==='E')return'E1';return null;
+    case'DOT':if(isD(c))return'FLT';if(c==='e'||c==='E')return'E1';return null;
+    case'FLT':if(isD(c))return'FLT';if(c==='e'||c==='E')return'E1';return null;
+    case'E1':if(c==='+'||c==='-')return'E2';if(isD(c))return'EXP';return null;
+    case'E2':case'EXP':return isD(c)?'EXP':null;
+    case'LT':if(c==='=')return'LE';if(c==='<')return'SHL';return null;
+    case'GT':if(c==='=')return'GE';if(c==='>')return'SHR';return null;
+    case'EQ':return c==='='?'EQEQ':null;case'NOT':return c==='='?'NE':null;
+    case'AMP':return c==='&'?'ANDAND':null;case'BAR':return c==='|'?'OROR':null;
+    case'PLUS':if(c==='+')return'INC';if(c==='=')return'PLUSEQ';return null;
+    case'MINUS':if(c==='-')return'DEC';if(c==='=')return'MINUSEQ';return null;
+    case'ARITH':return c==='='?'ARITHEQ':null;
+  }return null;}
+const ACC={ID:'identifier',INT:'integer literal',DOT:'float literal',FLT:'float literal',EXP:'float literal',LT:'operator <',LE:'operator <=',SHL:'operator <<',GT:'operator >',GE:'operator >=',SHR:'operator >>',EQ:'operator =',EQEQ:'operator ==',NOT:'operator !',NE:'operator !=',AMP:'operator &',ANDAND:'operator &&',BAR:'operator |',OROR:'operator ||',PLUS:'operator +',INC:'operator ++',PLUSEQ:'operator +=',MINUS:'operator -',DEC:'operator --',MINUSEQ:'operator -=',ARITH:'operator * / %',ARITHEQ:'operator *= /= %=',PUNCT:'punctuation'};
+function lexEvents(s){
+  const ev=[];let pos=0;const n=s.length;
+  while(pos<n){const c=s[pos];
+    if(/\s/.test(c)){ev.push({t:'skip',pos});pos++;continue}
+    let st='S0',i=pos,last=null;ev.push({t:'start',pos});
+    while(i<n){const nx=dfaNext(st,s[i]);if(nx===null)break;ev.push({t:'move',from:st,to:nx,pos:i,ch:s[i]});st=nx;i++;if(ACC[st])last={st,end:i}}
+    if(last){
+      if(last.end<i)ev.push({t:'back',pos:last.end,from:i,st:last.st});
+      const lex=s.slice(pos,last.end);let kind=ACC[last.st];
+      if(last.st==='ID'&&KEYWORDS.has(lex))kind='keyword';
+      ev.push({t:'emit',start:pos,end:last.end,lex,kind,st:last.st});pos=last.end}
+    else{ev.push({t:'error',pos:i<n?i:pos,ch:s[i<n?i:pos]});pos=Math.max(i+1,pos+1)}
+  }return ev}
+/* --- automaton diagrams (hand-laid-out SVG) --- */
+const DG={};
+function mkDiagram(id,w,h,states,edges){
+  const R=17;let out=`<svg viewBox="0 -28 ${w} ${h+28}" width="${w}"><defs><marker id="ar${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--mute)"/></marker></defs>`;
+  edges.forEach(e=>{const a=states[e.f],b=states[e.t];let d,lx,ly;
+    if(e.f===e.t){d=`M${a.x-10} ${a.y-R+2} C${a.x-26} ${a.y-R-34} ${a.x+26} ${a.y-R-34} ${a.x+10} ${a.y-R+2}`;lx=a.x;ly=a.y-R-24}
+    else{const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;const c=e.c||0;const x1=a.x+ux*R,y1=a.y+uy*R,x2=b.x-ux*(R+3),y2=b.y-uy*(R+3);
+      const mx=(x1+x2)/2-uy*c,my=(y1+y2)/2+ux*c;d=c?`M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}`:`M${x1} ${y1} L${x2} ${y2}`;lx=(x1+x2)/2-uy*(c?c/2+8:9);ly=(y1+y2)/2+ux*(c?c/2+8:9)-2}
+    out+=`<path id="e${id}-${e.f}-${e.t}" class="dfe" d="${d}" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar${id})"/><text x="${lx}" y="${ly}" font-size="10.5" text-anchor="middle" fill="var(--mute)">${esc(e.l)}</text>`});
+  Object.entries(states).forEach(([k,s])=>{out+=`<g id="n${id}-${k}" class="dfn"><circle cx="${s.x}" cy="${s.y}" r="${R}" fill="var(--panel2)" stroke="var(--acc2)" stroke-width="1.8"/>${s.acc?`<circle cx="${s.x}" cy="${s.y}" r="${R-4}" fill="none" stroke="var(--acc2)" stroke-width="1.2"/>`:''}<text x="${s.x}" y="${s.y+4}" font-size="${s.l.length>3?9.5:11}" text-anchor="middle">${esc(s.l)}</text></g>`});
+  return out+'</svg>'}
+$('#dfaA').innerHTML=mkDiagram('A',330,120,{S0:{x:50,y:70,l:'S0'},ID:{x:230,y:70,l:'ID',acc:1}},[{f:'S0',t:'ID',l:'letter | _'},{f:'ID',t:'ID',l:'letter | digit | _'}]);
+$('#dfaB').innerHTML=mkDiagram('B',560,190,{S0:{x:35,y:90,l:'S0'},INT:{x:140,y:90,l:'INT',acc:1},DOT:{x:260,y:40,l:'DOT',acc:1},FLT:{x:390,y:40,l:'FLT',acc:1},E1:{x:270,y:150,l:'E1'},E2:{x:390,y:150,l:'E2'},EXP:{x:510,y:100,l:'EXP',acc:1}},
+ [{f:'S0',t:'INT',l:'digit'},{f:'INT',t:'INT',l:'digit'},{f:'INT',t:'DOT',l:'.'},{f:'DOT',t:'FLT',l:'digit'},{f:'FLT',t:'FLT',l:'digit'},{f:'INT',t:'E1',l:'e|E',c:-14},{f:'FLT',t:'E1',l:'e|E',c:-26},{f:'DOT',t:'E1',l:'e|E',c:18},{f:'E1',t:'E2',l:'+ | -'},{f:'E1',t:'EXP',l:'digit',c:-6},{f:'E2',t:'EXP',l:'digit'},{f:'EXP',t:'EXP',l:'digit'}]);
+(function(){const first=['LT','GT','EQ','NOT','AMP','BAR','PLUS','MINUS','ARITH','PUNCT'];const S={S0:{x:40,y:215,l:'S0'}};const E=[];
+  first.forEach((k,i)=>{S[k]={x:230,y:26+i*42,l:k,acc:1};E.push({f:'S0',t:k,l:{LT:'<',GT:'>',EQ:'=',NOT:'!',AMP:'&',BAR:'|',PLUS:'+',MINUS:'-',ARITH:'* / %',PUNCT:'( ) { } [ ] ; , : ^ ~'}[k]})});
+  const sec=[['LT','LE','='],['LT','SHL','<'],['GT','GE','='],['GT','SHR','>'],['EQ','EQEQ','='],['NOT','NE','='],['AMP','ANDAND','&'],['BAR','OROR','|'],['PLUS','INC','+'],['PLUS','PLUSEQ','='],['MINUS','DEC','-'],['MINUS','MINUSEQ','='],['ARITH','ARITHEQ','=']];
+  const ys={};sec.forEach(([f,t,l],i)=>{const y=S[f].y+(ys[f]?14:-4);ys[f]=1;S[t]={x:450+(ys[f]&&S[f].used?60:0),y:y,l:t,acc:1};S[f].used=1;E.push({f,t,l})});
+  // spread second-level states vertically to avoid overlap
+  let yy=14;Object.keys(S).forEach(k=>{if(!first.includes(k)&&k!=='S0'){S[k].y=yy;yy+=32}});
+  $('#dfaC').innerHTML=mkDiagram('C',640,Math.max(450,yy+20),S,E)})();
+let LX={ev:[],i:-1,text:''};
+function lexBuild(){LX.text=$('#lexIn').value;LX.ev=lexEvents(LX.text);LX.i=-1;lexRender()}
+function lexRender(){
+  const t=LX.text,e=LX.ev[LX.i];$$('.dfn circle:first-child').forEach(c=>{c.setAttribute('fill','var(--panel2)');c.setAttribute('stroke','var(--acc2)')});$$('.dfe').forEach(p=>{p.setAttribute('stroke','var(--mute)');p.setAttribute('stroke-width','1.5')});
+  let doneTo=0,curFrom=-1,curTo=-1,msg='Press Play or Step.',state='S0';const toks=[];
+  for(let k=0;k<=LX.i;k++){const x=LX.ev[k];
+    if(x.t==='emit'){doneTo=x.end;toks.push(x);state='S0'}if(x.t==='skip')doneTo=x.pos+1;
+    if(x.t==='start'){curFrom=x.pos;state='S0'}if(x.t==='move'){state=x.to;curTo=x.pos+1}if(x.t==='back'){curTo=x.pos}}
+  if(e){
+    if(e.t==='skip')msg='Whitespace is skipped — it never becomes a token.';
+    if(e.t==='start')msg=`Start a new token at position ${e.pos}: automaton is in the start state <b>S0</b>.`;
+    if(e.t==='move'){msg=`Read <span class="kbd">${esc(e.ch)}</span>: transition <b>${e.from}</b> → <b>${e.to}</b>${ACC[e.to]?` (accepting: <i>${ACC[e.to]}</i>, remember this position)`:' (not accepting yet)'}.`;
+      const el=$('#n'+diagOf(e.to)+'-'+e.to);if(el){el.firstChild.setAttribute('fill','color-mix(in srgb,var(--acc) 45%,transparent)');el.firstChild.setAttribute('stroke','var(--acc)')}
+      const p=$('#e'+diagOf(e.to)+'-'+e.from+'-'+e.to);if(p){p.setAttribute('stroke','var(--acc)');p.setAttribute('stroke-width','3')}}
+    if(e.t==='back')msg=`<b>Maximal munch backtrack:</b> the automaton ran ahead to position ${e.from} but got stuck, so it goes back to the last accepting position (${e.pos}).`;
+    if(e.t==='emit'){msg=`<b>Emit token</b> <span class="kbd">${esc(e.lex)}</span> as <i>${e.kind}</i>${e.kind==='keyword'?' (keyword-table lookup matched)':''}.`;const el=$('#n'+diagOf(e.st)+'-'+e.st);if(el){el.firstChild.setAttribute('fill','color-mix(in srgb,var(--ok) 40%,transparent)');el.firstChild.setAttribute('stroke','var(--ok)')}}
+    if(e.t==='error')msg=`<b>Lexical error:</b> character <span class="kbd">${esc(e.ch)}</span> at position ${e.pos} does not start any token.`}
+  $('#lexMsg').className='msg'+(e&&e.t==='error'?' bad':'');$('#lexMsg').innerHTML=msg;
+  let html='';for(let k=0;k<t.length;k++){let c=k<doneTo?'done':'';if(e&&e.t!=='emit'&&e.t!=='skip'&&k>=curFrom&&k<curTo)c='tok';if(e&&e.t==='move'&&k===e.pos)c='cur';if(e&&e.t==='start'&&k===e.pos)c='cur';if(e&&e.t==='error'&&k===e.pos)c='cur';html+=`<span class="${c}">${esc(t[k]===' '?'·':t[k])}</span>`}
+  $('#lexChars').innerHTML=html;
+  $('#lexTokens').innerHTML=toks.length?toks.map(x=>`<span class="tk"><b>${esc(x.kind)}</b>${esc(x.lex)}</span>`).join(''):'<span class="mute">no tokens yet</span>';
+  $('#lexCount').textContent=`event ${Math.max(LX.i+1,0)} / ${LX.ev.length}`}
+const diagOf=s=>['ID'].includes(s)?'A':['INT','DOT','FLT','E1','E2','EXP'].includes(s)?'B':'C';
+const lexGo={at:()=>LX.i,set:v=>{LX.i=Math.max(-1,Math.min(LX.ev.length-1,v));lexRender()}};
+$('#lexNext').onclick=()=>lexGo.set(LX.i+1);$('#lexPrev').onclick=()=>lexGo.set(LX.i-1);$('#lexReset').onclick=()=>lexGo.set(-1);
+const lexStop=player($('#lexPlay'),()=>LX.ev.length,lexGo,()=>1100-$('#lexSpeed').value*95);
+$('#lexIn').oninput=()=>{lexStop();lexBuild()};
+[['Assignment with exponent','count1 = x2 <= 12e+3 && !done;'],['Keywords vs identifiers','if (iffy != 0) return int1;'],['Maximal munch: a+++b','a+++b'],['Backtrack: 12e+ x','12e+ x'],['Compound operators','i += 3 << 2; j-- >= k;'],['Lexical error','price = 5 @ 2;']].forEach(([n,v])=>{const o=document.createElement('option');o.textContent=n;o.value=v;$('#lexPreset').append(o)});
+$('#lexPreset').onchange=()=>{$('#lexIn').value=$('#lexPreset').value;lexStop();lexBuild()};
+$('#lexIn').value=$('#lexPreset').value;lexBuild();
+
+/* ============================================================ PHASE 2 : GRAMMAR WORKBENCH */
+const EPSW=new Set(['ε','eps','epsilon','lambda','λ']);
+function gParse(text){const prods=[],nts=[];
+  text.split('\n').map(l=>l.replace(/#.*$/,'').trim()).filter(Boolean).forEach(ln=>{const m=/^(\S+)\s*(?:->|→|::=)\s*(.*)$/.exec(ln);if(!m)throw new Error(`Cannot read the line "${ln}". Use the form   A -> x y | z`);
+    if(!nts.includes(m[1]))nts.push(m[1]);m[2].split('|').forEach(alt=>{let s=alt.trim().split(/\s+/).filter(Boolean);if(s.length===1&&EPSW.has(s[0]))s=[];prods.push({lhs:m[1],rhs:s})})});
+  if(!prods.length)throw new Error('The grammar is empty.');
+  const terms=[];prods.forEach((p,i)=>{p.id=i;p.rhs.forEach(s=>{if(!nts.includes(s)&&!terms.includes(s))terms.push(s)})});
+  return{start:nts[0],nts,terms,prods}}
+const fmtP=p=>`${p.lhs} → ${p.rhs.length?p.rhs.join(' '):'ε'}`;
+function gAnalyze(G){const nullable=new Set(),first={},follow={};G.nts.forEach(n=>{first[n]=new Set();follow[n]=new Set()});
+  const isN=s=>G.nts.includes(s);let ch=true;
+  while(ch){ch=false;for(const p of G.prods){if(!nullable.has(p.lhs)&&p.rhs.every(s=>nullable.has(s))){nullable.add(p.lhs);ch=true}
+    for(const s of p.rhs){if(isN(s)){first[s].forEach(t=>{if(!first[p.lhs].has(t)){first[p.lhs].add(t);ch=true}});if(!nullable.has(s))break}else{if(!first[p.lhs].has(s)){first[p.lhs].add(s);ch=true}break}}}}
+  const firstSeq=seq=>{const set=new Set();let nl=true;for(const s of seq){if(isN(s)){first[s].forEach(t=>set.add(t));if(!nullable.has(s)){nl=false;break}}else{set.add(s);nl=false;break}}return{set,nullable:nl}};
+  follow[G.start].add('$');ch=true;
+  while(ch){ch=false;for(const p of G.prods)for(let i=0;i<p.rhs.length;i++){const B=p.rhs[i];if(!isN(B))continue;const f=firstSeq(p.rhs.slice(i+1));
+    f.set.forEach(t=>{if(!follow[B].has(t)){follow[B].add(t);ch=true}});if(f.nullable)follow[p.lhs].forEach(t=>{if(!follow[B].has(t)){follow[B].add(t);ch=true}})}}
+  return{nullable,first,follow,firstSeq}}
+function gLL1(G,an){const table={},conflicts=[];G.nts.forEach(A=>table[A]={});
+  G.prods.forEach(p=>{const f=an.firstSeq(p.rhs),add=t=>{(table[p.lhs][t]=table[p.lhs][t]||[]).push(p.id)};f.set.forEach(add);if(f.nullable)an.follow[p.lhs].forEach(add)});
+  G.nts.forEach(A=>Object.entries(table[A]).forEach(([t,ps])=>{if(ps.length>1)conflicts.push({A,t,ps})}));return{table,conflicts}}
+function leftRecursive(G,an){const g={};G.nts.forEach(n=>g[n]=new Set());
+  G.prods.forEach(p=>{for(const s of p.rhs){if(G.nts.includes(s)){g[p.lhs].add(s);if(!an.nullable.has(s))break}else break}});
+  return G.nts.filter(A=>{const seen=new Set(),st=[...g[A]];while(st.length){const x=st.pop();if(x===A)return true;if(seen.has(x))continue;seen.add(x);g[x].forEach(y=>st.push(y))}return false})}
+function gText(nts,prods){return nts.map(A=>`${A} -> ${prods.filter(p=>p.lhs===A).map(p=>p.rhs.length?p.rhs.join(' '):'ε').join(' | ')}`).join('\n')}
+function elimLR(G){let nts=[...G.nts],prods=G.prods.map(p=>({lhs:p.lhs,rhs:[...p.rhs]}));const log=[];
+  for(let i=0;i<G.nts.length;i++){const Ai=G.nts[i];
+    for(let j=0;j<i;j++){const Aj=G.nts[j];let ch=false;const np=[];prods.filter(p=>p.lhs===Ai).forEach(p=>{if(p.rhs[0]===Aj){ch=true;prods.filter(q=>q.lhs===Aj).forEach(q=>np.push({lhs:Ai,rhs:[...q.rhs,...p.rhs.slice(1)]}))}else np.push(p)});
+      if(ch){prods=prods.filter(p=>p.lhs!==Ai);prods.push(...np);log.push(`Substituted ${Aj} into ${Ai} (indirect left recursion).`)}}
+    const mine=prods.filter(p=>p.lhs===Ai),rec=mine.filter(p=>p.rhs[0]===Ai),non=mine.filter(p=>p.rhs[0]!==Ai);
+    if(rec.length){let Ap=Ai+"'";while(nts.includes(Ap))Ap+="'";nts.splice(nts.indexOf(Ai)+1,0,Ap);prods=prods.filter(p=>p.lhs!==Ai);
+      non.forEach(p=>prods.push({lhs:Ai,rhs:[...p.rhs,Ap]}));if(!non.length)prods.push({lhs:Ai,rhs:[Ap]});
+      rec.forEach(p=>prods.push({lhs:Ap,rhs:[...p.rhs.slice(1),Ap]}));prods.push({lhs:Ap,rhs:[]});log.push(`${Ai} → ${Ai} α | β  becomes  ${Ai} → β ${Ap},  ${Ap} → α ${Ap} | ε.`)}}
+  return{text:gText(nts,prods),log}}
+function leftFactor(G){let nts=[...G.nts],prods=G.prods.map(p=>({lhs:p.lhs,rhs:[...p.rhs]}));const log=[];let again=true,guard=0;
+  while(again&&guard++<30){again=false;for(const A of [...nts]){const mine=prods.filter(p=>p.lhs===A),groups={};mine.forEach(p=>{if(p.rhs.length)(groups[p.rhs[0]]=groups[p.rhs[0]]||[]).push(p)});
+    const bad=Object.values(groups).find(g=>g.length>1);if(!bad)continue;
+    let pre=[...bad[0].rhs];bad.forEach(p=>{let i=0;while(i<pre.length&&i<p.rhs.length&&pre[i]===p.rhs[i])i++;pre=pre.slice(0,i)});
+    let Ap=A+"'";while(nts.includes(Ap))Ap+="'";nts.splice(nts.indexOf(A)+1,0,Ap);prods=prods.filter(p=>!bad.includes(p));prods.push({lhs:A,rhs:[...pre,Ap]});bad.forEach(p=>prods.push({lhs:Ap,rhs:p.rhs.slice(pre.length)}));
+    log.push(`Common prefix "${pre.join(' ')}" of ${A} factored out into ${Ap}.`);again=true;break}}
+  return{text:gText(nts,prods),log}}
+/* ---- LL(1) predictive parse with a growing tree ---- */
+let nid=0;const cloneT=n=>({id:n.id,label:n.label,type:n.type,exp:n.exp,matched:n.matched,children:n.children.map(cloneT)});
+function llParse(G,an,ll,toks){const root={id:++nid,label:G.start,type:'nt',exp:false,children:[]};const stack=[{sym:'$',node:null},{sym:G.start,node:root}];const inp=[...toks,'$'];let ip=0;const steps=[];let ok=false,err=null;
+  const snap=(act,hl)=>steps.push({stack:stack.map(s=>s.sym).reverse(),input:inp.slice(ip),action:act,tree:cloneT(root),hl});
+  snap('Start: push $ and the start symbol '+G.start,root.id);
+  for(let g=0;g<160;g++){const top=stack[stack.length-1],a=inp[ip];
+    if(g===159){err='looping';snap('Stopped after 160 steps: the parser keeps expanding the same non-terminal forever. This is the classic failure of <b>left recursion</b> in a top-down parser — use “Eliminate left recursion”.'.replace(/<[^>]+>/g,''),top.node?top.node.id:null);break}
+    if(top.sym==='$'){if(a==='$'){snap('Accept ✔ — input fully consumed',null);ok=true}else{err=`Input left over at "${a}"`;snap('Error: '+err,null)}break}
+    if(!G.nts.includes(top.sym)){if(top.sym===a){top.node.matched=true;stack.pop();ip++;snap(`Match terminal "${a}"`,top.node.id)}else{err=`Expected "${top.sym}" but found "${a}"`;snap('Error: '+err,top.node.id);break}continue}
+    const ent=(ll.table[top.sym]||{})[a];
+    if(!ent){err=`No entry M[${top.sym}, ${a}] — syntax error`;snap('Error: '+err,top.node.id);break}
+    const p=G.prods[ent[0]];let note=ent.length>1?`  ⚠ conflict: ${ent.length} productions fit; taking the first`:'';
+    stack.pop();top.node.exp=true;const kids=p.rhs.length?p.rhs.map(s=>({id:++nid,label:s,type:G.nts.includes(s)?'nt':'t',exp:false,matched:false,children:[]})):[{id:++nid,label:'ε',type:'eps',exp:true,matched:true,children:[]}];
+    top.node.children=kids;if(p.rhs.length)for(let k=kids.length-1;k>=0;k--)stack.push({sym:kids[k].label,node:kids[k]});
+    snap(`Expand with ${fmtP(p)}${note}`,top.node.id)}
+  return{steps,ok,err}}
+/* ---- SLR(1) ---- */
+function buildSLR(G,an){const P=[{lhs:G.start+"′",rhs:[G.start],id:-1},...G.prods];const isN=s=>G.nts.includes(s);
+  const closure=I=>{const S=new Map(I.map(i=>[i.p+'.'+i.d,i]));let ch=true;while(ch){ch=false;[...S.values()].forEach(it=>{const B=P[it.p].rhs[it.d];if(B&&isN(B))P.forEach((q,qi)=>{if(q.lhs===B&&!S.has(qi+'.0')){S.set(qi+'.0',{p:qi,d:0});ch=true}})})}return[...S.values()]};
+  const key=I=>[...I].map(i=>i.p+'.'+i.d).sort().join('|');
+  const go=(I,X)=>closure(I.filter(i=>P[i.p].rhs[i.d]===X).map(i=>({p:i.p,d:i.d+1})));
+  const states=[],idx=new Map(),trans=[];const add=I=>{const k=key(I);if(idx.has(k))return idx.get(k);idx.set(k,states.length);states.push(I);trans.push({});return states.length-1};
+  add(closure([{p:0,d:0}]));
+  for(let s=0;s<states.length;s++){const syms=[...new Set(states[s].map(i=>P[i.p].rhs[i.d]).filter(Boolean))];syms.forEach(X=>{const J=go(states[s],X);if(J.length)trans[s][X]=add(J)})}
+  const action=states.map(()=>({})),gotoT=states.map(()=>({})),conf=[];
+  states.forEach((I,s)=>{I.forEach(it=>{const pr=P[it.p],B=pr.rhs[it.d];
+      if(B&&!isN(B)&&trans[s][B]!==undefined)(action[s][B]=action[s][B]||[]).push({k:'s',to:trans[s][B]});
+      if(!B){if(it.p===0)(action[s]['$']=action[s]['$']||[]).push({k:'acc'});else an.follow[pr.lhs].forEach(t=>(action[s][t]=action[s][t]||[]).push({k:'r',p:it.p}))}});
+    Object.entries(trans[s]).forEach(([X,t])=>{if(isN(X))gotoT[s][X]=t});
+    Object.entries(action[s]).forEach(([t,list])=>{const u=[];list.forEach(a=>{if(!u.some(b=>b.k===a.k&&b.p===a.p&&b.to===a.to))u.push(a)});action[s][t]=u;if(u.length>1)conf.push({s,t,list:u})})});
+  return{P,states,trans,action,gotoT,conf}}
+const actTxt=(a,P)=>a.k==='s'?'s'+a.to:a.k==='acc'?'acc':'r'+(a.p)+' ('+fmtP(P[a.p])+')';
+function lrParse(G,S,toks){const stack=[{st:0,node:null,sym:''}];const inp=[...toks,'$'];let ip=0;const steps=[];let ok=false,err=null;
+  const snap=act=>steps.push({stack:stack.map(x=>(x.sym?x.sym+' ':'')+x.st),input:inp.slice(ip),action:act,forest:stack.filter(x=>x.node).map(x=>x.node)});
+  snap('Start in state 0');
+  for(let g=0;g<800;g++){const s=stack[stack.length-1].st,a=inp[ip],ents=S.action[s][a];
+    if(!ents){err=`No action in state ${s} on "${a}" — syntax error`;snap('Error: '+err);break}
+    const e=ents.find(x=>x.k==='s')||ents[0];const note=ents.length>1?`  ⚠ conflict (${ents.map(x=>actTxt(x,S.P)).join(' / ')}); chose ${actTxt(e,S.P)}`:'';
+    if(e.k==='s'){stack.push({st:e.to,sym:a,node:{id:++nid,label:a,type:'t',children:[],matched:true}});ip++;snap(`Shift "${a}", go to state ${e.to}${note}`)}
+    else if(e.k==='r'){const p=S.P[e.p];const kids=[];for(let k=0;k<p.rhs.length;k++)kids.unshift(stack.pop().node);const t=S.gotoT[stack[stack.length-1].st][p.lhs];
+      if(t===undefined){err='GOTO missing';snap('Error: '+err);break}
+      stack.push({st:t,sym:p.lhs,node:{id:++nid,label:p.lhs,type:'nt',exp:true,children:kids.length?kids:[{id:++nid,label:'ε',type:'eps',children:[],matched:true}]}});snap(`Reduce by ${fmtP(p)}, then GOTO state ${t}${note}`)}
+    else{snap('Accept ✔');ok=true;break}}
+  return{steps,ok,err}}
+/* ---- tree drawing ---- */
+function drawTrees(roots,hl){const H=52;let x=0,maxD=0;const nodes=[],edges=[];
+  const lay=(n,d)=>{maxD=Math.max(maxD,d);n._w=Math.max(46,n.label.length*8.4+16);n._d=d;if(!n.children.length){n._x=x+n._w/2;x+=n._w+8}else{n.children.forEach(c=>lay(c,d+1));n._x=(n.children[0]._x+n.children[n.children.length-1]._x)/2}nodes.push(n);n.children.forEach(c=>edges.push([n,c]))};
+  roots.forEach(r=>{lay(r,0);x+=26});const W=Math.max(x,160),Ht=(maxD+1)*H+14;
+  let s=`<svg viewBox="0 0 ${W} ${Ht}" width="${W}" height="${Ht}">`;
+  edges.forEach(([a,b])=>{s+=`<line x1="${a._x}" y1="${a._d*H+26}" x2="${b._x}" y2="${b._d*H+8}" stroke="var(--mute)" stroke-width="1.3"/>`});
+  nodes.forEach(n=>{const y=n._d*H+8,fill=n.type==='t'?(n.matched?'var(--okbg)':'var(--panel2)'):n.type==='eps'?'var(--panel2)':'color-mix(in srgb,var(--acc2) 22%,var(--panel2))';
+    const stroke=n.id===hl?'var(--warn)':n.type==='nt'&&n.exp===false?'var(--mute)':'var(--line)';
+    s+=`<g class="node"><rect x="${n._x-n._w/2+3}" y="${y}" width="${n._w-6}" height="22" rx="${n.type==='t'?4:11}" fill="${fill}" stroke="${stroke}" stroke-width="${n.id===hl?2.5:1.3}" ${n.type==='nt'&&n.exp===false?'stroke-dasharray="3 2"':''}/><text x="${n._x}" y="${y+15}" font-size="12" text-anchor="middle">${esc(n.label)}</text></g>`});
+  return s+'</svg>'}
+/* ---- UI wiring ---- */
+const GPRE=[
+['Expressions — left-recursive (not LL(1), but SLR(1))',`E -> E + T | T\nT -> T * F | F\nF -> ( E ) | id`,'id + id * id'],
+['Expressions — LL(1) form',`E -> T E'\nE' -> + T E' | ε\nT -> F T'\nT' -> * F T' | ε\nF -> ( E ) | id`,'id + id * id'],
+['Dangling else — ambiguous (conflicts!)',`S -> if E then S | if E then S else S | a\nE -> b`,'if b then if b then a else a'],
+['Common prefix — needs left factoring',`S -> a b c | a b d | e`,'a b d'],
+['Balanced parentheses with ε',`S -> ( S ) S | ε`,'( ( ) ) ( )'],
+['Statement list',`L -> L ; S | S\nS -> id = E\nE -> E + id | id`,'id = id + id ; id = id']];
+GPRE.forEach(([n])=>{const o=document.createElement('option');o.textContent=n;$('#gPreset').append(o)});
+let GS={steps:[],i:0,G:null};
+$('#gPreset').onchange=()=>{const p=GPRE[$('#gPreset').selectedIndex];$('#gText').value=p[1];$('#gInput').value=p[2];gRun()};
+$('#gText').value=GPRE[0][1];
+function table(head,rows,cls){return`<table><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>typeof c==='object'?`<td class="${c.c||''}">${c.h}</td>`:`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`}
+function gRun(){gStop();let G;
+  try{G=gParse($('#gText').value)}catch(e){$('#gSummary').innerHTML=`<div class="msg bad">${esc(e.message)}</div>`;return}
+  const an=gAnalyze(G),ll=gLL1(G,an),lrn=leftRecursive(G,an),S=buildSLR(G,an);const terms=[...G.terms,'$'];
+  GS.G=G;
+  const lr1=S.conf.length===0;
+  $('#gSummary').innerHTML=`<div class="row" style="gap:6px"><span class="pill ${lrn.length?'bad':'ok'}">${lrn.length?'left-recursive: '+lrn.join(', '):'no left recursion'}</span><span class="pill ${ll.conflicts.length?'bad':'ok'}">${ll.conflicts.length?'NOT LL(1): '+ll.conflicts.length+' conflict(s)':'LL(1) ✔'}</span><span class="pill ${lr1?'ok':'bad'}">${lr1?'SLR(1) ✔':'NOT SLR(1): '+S.conf.length+' conflict(s)'}</span></div>`+
+    (lrn.length?`<div class="msg warn small">Top-down parsers loop forever on left recursion. Press <b>Eliminate left recursion</b> to rewrite the grammar.</div>`:'')+
+    (ll.conflicts.length&&!lrn.length?`<div class="msg warn small">LL(1) conflict at ${ll.conflicts.slice(0,3).map(c=>`M[${c.A}, ${c.t}]`).join(', ')} — try <b>Left-factor</b>, or the grammar may be ambiguous.</div>`:'')+
+    (!lr1?`<div class="msg warn small">SLR conflict: ${S.conf.slice(0,2).map(c=>`state ${c.s} on "${c.t}" (${c.list.map(a=>a.k==='s'?'shift':a.k==='r'?'reduce':'accept').join(' / ')})`).join('; ')} — typical of an ambiguous grammar (e.g. dangling else).</div>`:'');
+  $('#gFF').innerHTML=table(['#','Production'],G.prods.map(p=>[String(p.id),fmtP(p)]))+'<br>'+table(['Non-terminal','Nullable','FIRST','FOLLOW'],G.nts.map(A=>[A,an.nullable.has(A)?'yes':'no','{ '+[...an.first[A],...(an.nullable.has(A)?['ε']:[])].join(', ')+' }','{ '+[...an.follow[A]].join(', ')+' }']));
+  $('#gLL').innerHTML=table(['M[A, a]',...terms],G.nts.map(A=>[A,...terms.map(t=>{const e=ll.table[A][t];return e?{h:e.map(i=>esc(fmtP(G.prods[i]))).join('<br>'),c:e.length>1?'cellbad':'cellok'}:''})]));
+  $('#gLRinfo').innerHTML=`<p class="small mute">${S.states.length} LR(0) states. Reduce actions are placed on FOLLOW(A) (that is what makes it <b>SLR</b>). Red cells are shift/reduce or reduce/reduce conflicts.</p>`;
+  const nts2=G.nts;
+  $('#gLRtab').innerHTML=table(['state',...terms.map(t=>'ACTION '+t),...nts2.map(n=>'GOTO '+n)],S.states.map((_,s)=>[String(s),...terms.map(t=>{const a=S.action[s][t];return a?{h:a.map(x=>x.k==='r'?'r'+x.p:x.k==='s'?'s'+x.to:'acc').join(' / '),c:a.length>1?'cellbad':'cellok'}:''}),...nts2.map(n=>S.gotoT[s][n]!==undefined?String(S.gotoT[s][n]):'')]));
+  $('#gStates').innerHTML=S.states.map((I,s)=>`<div class="card" style="margin:0"><h2>State ${s}</h2><pre>${I.map(it=>{const p=S.P[it.p];return esc(p.lhs+' → '+[...p.rhs.slice(0,it.d),'•',...p.rhs.slice(it.d)].join(' '))}).join('\n')}</pre><div class="small mute">${Object.entries(S.trans[s]).map(([X,t])=>`on <b>${esc(X)}</b> → ${t}`).join(' · ')||'no transitions'}</div></div>`).join('');
+  GS.an=an;GS.ll=ll;GS.S=S;gParseRun()}
+function gParseRun(){gStop();const G=GS.G;if(!G)return;const toks=$('#gInput').value.trim().split(/\s+/).filter(Boolean);const mode=document.querySelector('input[name=gm]:checked').value;
+  const r=mode==='ll'?llParse(G,GS.an,GS.ll,toks):lrParse(G,GS.S,toks);GS.steps=r.steps;GS.mode=mode;GS.res=r;GS.i=0;$('#gSlider').max=r.steps.length-1;gShow()}
+function gShow(){const s=GS.steps[GS.i];if(!s)return;$('#gSlider').value=GS.i;$('#gStepLbl').textContent=`step ${GS.i+1} / ${GS.steps.length}`;
+  const last=GS.i===GS.steps.length-1;$('#gAction').className='msg'+(last?(GS.res.ok?' ok':' bad'):'');$('#gAction').innerHTML=esc(s.action);
+  const roots=GS.mode==='ll'?[s.tree]:(s.forest.length?s.forest.map(n=>JSON.parse(JSON.stringify(n))):[]);
+  $('#gTree').innerHTML=roots.length?drawTrees(roots,s.hl):'<p class="mute small" style="padding:8px">The tree appears as soon as the parser shifts a token.</p>';
+  $('#gTrace').innerHTML=table(['#','Stack'+(GS.mode==='ll'?' (top at left)':' (states)'),'Input','Action'],GS.steps.map((x,k)=>[{h:String(k+1),c:k===GS.i?'cellok':''},{h:esc(x.stack.join(' ')),c:k===GS.i?'cellok':''},{h:esc(x.input.join(' ')),c:k===GS.i?'cellok':''},{h:esc(x.action),c:k===GS.i?'cellok':''}]));
+  const row=$('#gTrace').querySelectorAll('tr')[GS.i+1];if(row)row.scrollIntoView({block:'nearest'})}
+const gGo={at:()=>GS.i,set:v=>{GS.i=Math.max(0,Math.min(GS.steps.length-1,v));gShow()}};
+$('#gNext').onclick=()=>gGo.set(GS.i+1);$('#gPrev').onclick=()=>gGo.set(GS.i-1);$('#gReset').onclick=()=>gGo.set(0);$('#gSlider').oninput=e=>gGo.set(+e.target.value);
+const gStop=player($('#gPlay'),()=>GS.steps.length,gGo,()=>700);
+$('#gText').oninput=()=>gRun();$('#gInput').oninput=gParseRun;document.querySelectorAll('input[name=gm]').forEach(r=>r.onchange=gParseRun);
+$('#gLR').onclick=()=>{try{const r=elimLR(gParse($('#gText').value));$('#gText').value=r.text;gRun();$('#gSummary').insertAdjacentHTML('beforeend',`<div class="msg ok small">${r.log.length?r.log.map(esc).join('<br>'):'No left recursion found — grammar unchanged.'}</div>`)}catch(e){}};
+$('#gLF').onclick=()=>{try{const r=leftFactor(gParse($('#gText').value));$('#gText').value=r.text;gRun();$('#gSummary').insertAdjacentHTML('beforeend',`<div class="msg ok small">${r.log.length?r.log.map(esc).join('<br>'):'No common prefixes — grammar unchanged.'}</div>`)}catch(e){}};
+gRun();
+
+/* ============================================================ PHASES 3 & 4 : real compiler engine */
+const CPRE=[['Constants + loop (report example)',`int calculate(int *a, int *b, int n) {\n    int x = 10 * 20;\n    for (int i = 0; i < n; i++) {\n        a[i] = b[i] + x;\n    }\n    return x;\n}`],
+['Inline + vectorize',`int scale(int x) { return x * 3 + 1; }\nvoid apply(int * restrict out, int * restrict in, int n) {\n    for (int i = 0; i < n; i++) {\n        out[i] = scale(in[i]);\n    }\n}`],
+['Dead branch + constants',`int pick(int n) {\n    int k = 3;\n    int debug = 0;\n    if (debug) { n = n * 100; }\n    else { n = n + k * 2; }\n    return n;\n}`],
+['Heap to stack + loops',`int main() {\n    int *p = (int *) malloc(10 * sizeof(int));\n    for (int i = 0; i < 10; i++) p[i] = i * i;\n    int r = p[3] + p[4];\n    free(p);\n    return r;\n}`],
+['Matrix multiply (register pressure)',`void matmul(int * restrict a, int * restrict b, int * restrict c, int n) {\n    for (int i = 0; i < n; i++)\n        for (int j = 0; j < n; j++) {\n            int s = 0;\n            for (int k = 0; k < n; k++)\n                s += a[i * n + k] * b[k * n + j];\n            c[i * n + j] = s;\n        }\n}`],
+['Dot product (reduction)',`int dot(int *a, int *b, int n) {\n    int s = 0;\n    for (int i = 0; i < n; i++) s += a[i] * b[i];\n    return s;\n}`]];
+CPRE.forEach(([n])=>{const o=document.createElement('option');o.textContent=n;$('#cPreset').append(o)});
+$('#cPreset').onchange=()=>{$('#cSrc').value=CPRE[$('#cPreset').selectedIndex][1];compileNow()};$('#cSrc').value=CPRE[0][1];
+let CR=null,TM={i:0},ctimer;
+$('#cSrc').oninput=()=>{clearTimeout(ctimer);ctimer=setTimeout(compileNow,450)};$('#cFn').onchange=()=>{TM.i=0;tmRender();regBuild()};
+function curFn(){return CR&&CR.ok?CR.functions[+$('#cFn').value||0]:null}
+function compileNow(){
+  if($('#compWrap').style.display==='none')return;
+  try{CR=COE.compile($('#cSrc').value,{})}catch(e){CR={ok:false,diagnostics:[{level:'error',line:0,col:0,message:'Engine error: '+e.message}]}}
+  $('#cDiag').innerHTML=(CR.diagnostics||[]).filter(d=>CR.ok?d.level==='warning':true).slice(0,4).map(d=>`<div class="msg ${d.level==='error'?'bad':'warn'} small">${d.level.toUpperCase()} line ${d.line}: ${esc(d.message)}${d.hint?` — 💡 ${esc(d.hint)}`:''}</div>`).join('');
+  $('#cStatus').innerHTML=CR.ok?`<span class="pill ok">compiled</span>`:`<span class="pill bad">fix the error</span>`;
+  const sel=$('#cFn'),prev=sel.value;sel.innerHTML='';
+  if(CR.ok){CR.functions.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent='function '+f.name;sel.append(o)});if(prev&&+prev<CR.functions.length)sel.value=prev;sel.style.display=CR.functions.length>1?'':'none'}
+  TM.i=Math.min(TM.i,Math.max(0,(curFn()?curFn().snapshots.length:1)-1));tmRender();regBuild()}
+/* ----- unified LCS diff ----- */
+function udiff(a,b){const n=a.length,m=b.length,L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=a[i].t.trim()===b[j].t.trim()?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const out=[];let i=0,j=0;while(i<n&&j<m){if(a[i].t.trim()===b[j].t.trim()){out.push({k:'same',l:b[j]});i++;j++}else if(L[i+1][j]>=L[i][j+1]){out.push({k:'del',l:a[i]});i++}else{out.push({k:'add',l:b[j]});j++}}
+  while(i<n)out.push({k:'del',l:a[i++]});while(j<m)out.push({k:'add',l:b[j++]});return out}
+function layoutCFG(blocks,backE){const back=new Set(backE.map(s=>s.replace(' → ','>')));const layer={};blocks.forEach(b=>layer[b.id]=0);
+  for(let it=0;it<blocks.length+2;it++)blocks.forEach(b=>b.succ.forEach(s=>{if(!back.has(b.id+'>'+s)&&layer[s]<layer[b.id]+1)layer[s]=layer[b.id]+1}));
+  const layers=[];blocks.forEach(b=>{(layers[layer[b.id]]=layers[layer[b.id]]||[]).push(b)});
+  const info={};let maxW=0;blocks.forEach(b=>{const ls=b.instrs.slice(0,7).map(x=>x.length>46?x.slice(0,45)+'…':x);if(b.instrs.length>7)ls.push(`… +${b.instrs.length-7} more`);const w=Math.min(330,Math.max(110,Math.max(...ls.map(x=>x.length))*6.9+20));info[b.id]={ls,w,h:ls.length*14+30}});
+  const widths=layers.map(l=>l?l.reduce((s,b)=>s+info[b.id].w+40,-40):0);maxW=Math.max(...widths,200);
+  let y=14;layers.forEach((l,li)=>{if(!l)return;let x=(maxW-widths[li])/2+20;let lh=0;l.forEach(b=>{info[b.id].x=x;info[b.id].y=y;x+=info[b.id].w+40;lh=Math.max(lh,info[b.id].h)});y+=lh+52});
+  return{info,W:maxW+40,H:y+10,back}}
+function drawCFG(blocks,backE){if(!blocks.length)return'';const {info,W,H,back}=layoutCFG(blocks,backE);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><defs><marker id="cfa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mute)"/></marker><marker id="cfb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--bad)"/></marker></defs>`;
+  blocks.forEach(b=>b.succ.forEach(t=>{const A=info[b.id],B=info[t];if(!B)return;const isBack=back.has(b.id+'>'+t);
+    if(isBack){const x1=A.x+A.w,y1=A.y+A.h/2,x2=B.x+B.w,y2=B.y+B.h/2,bx=Math.max(x1,x2)+34;s+=`<path d="M${x1} ${y1} C${bx} ${y1} ${bx} ${y2} ${x2} ${y2}" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#cfb)"/>`}
+    else{const x1=A.x+A.w/2,y1=A.y+A.h,x2=B.x+B.w/2,y2=B.y,my=(y1+y2)/2;s+=`<path d="M${x1} ${y1} C${x1} ${my} ${x2} ${my} ${x2} ${y2-2}" fill="none" stroke="var(--mute)" stroke-width="1.6" marker-end="url(#cfa)"/>`}}));
+  blocks.forEach(b=>{const i=info[b.id];s+=`<g><rect x="${i.x}" y="${i.y}" width="${i.w}" height="${i.h}" rx="8" fill="${b.depth?'color-mix(in srgb,var(--acc2) '+Math.min(35,b.depth*16)+'%,var(--panel2))':'var(--panel2)'}" stroke="${b.depth?'var(--acc2)':'var(--line)'}" stroke-width="1.5"/><text x="${i.x+8}" y="${i.y+15}" font-size="11.5" font-weight="700" style="fill:var(--acc)">${b.id}${b.depth?` · loop depth ${b.depth}`:''}</text>${i.ls.map((l,k)=>`<text x="${i.x+8}" y="${i.y+30+k*14}" font-size="11">${esc(l)}</text>`).join('')}</g>`});
+  return s+'</svg>'}
+function tmRender(){
+  const F=curFn();
+  if(!F){['#tmStages','#tmIR','#tmCFG','#tmEvents','#tmChart','#tmSrc'].forEach(s=>$(s).innerHTML='');$('#tmNote').textContent='Fix the compile error above to see the optimizer stages.';return}
+  const SN=F.snapshots,i=Math.min(TM.i,SN.length-1),S=SN[i],P=i>0?SN[i-1]:null;TM.i=i;
+  $('#tmSlider').max=SN.length-1;$('#tmSlider').value=i;
+  $('#tmStages').innerHTML=SN.map((s,k)=>`<button class="${k===i?'on':''}" data-k="${k}">${k+1}. ${esc(s.name)}</button>`).join('');
+  $('#tmNote').innerHTML=`<b>${esc(S.name)}</b> — ${esc(S.note)} ${S.changed&&i>0?'':(i>0?'<span class="pill info">code unchanged at this stage</span>':'')}`;
+  const rows=P?udiff(P.ir,S.ir):S.ir.map(l=>({k:'same',l}));
+  $('#tmDiffNote').textContent=P?`(green = new, red = removed since “${P.name}”)`:'';
+  $('#tmIR').innerHTML=rows.map(r=>`<span class="irrow ${r.k==='add'?(r.l.k==='vec'?'add vec':'add'):r.k==='del'?'del':''} ${r.l.k==='marker'?'mk':''}" data-line="${r.l.line||''}">${esc(r.l.t)||' '}</span>`).join('');
+  const srcLines=$('#cSrc').value.split('\n');$('#tmSrc').innerHTML=srcLines.map((l,k)=>`<span class="srow" data-line="${k+1}"><i>${k+1}</i>${esc(l)||' '}</span>`).join('');
+  $('#tmCFG').innerHTML=drawCFG(S.cfg.blocks,S.cfg.backEdges);
+  const max=Math.max(...SN.map(s=>s.count),1),bw=Math.max(26,Math.min(60,300/SN.length));
+  $('#tmChart').innerHTML=`<svg viewBox="0 0 ${SN.length*(bw+8)+10} 120" width="${SN.length*(bw+8)+10}">${SN.map((s,k)=>{const h=Math.round(s.count/max*80);return`<g><rect x="${6+k*(bw+8)}" y="${96-h}" width="${bw}" height="${h}" rx="4" fill="${k===i?'var(--acc2)':'var(--line)'}"/><text x="${6+k*(bw+8)+bw/2}" y="${92-h}" font-size="11" text-anchor="middle">${s.count}</text><text x="${6+k*(bw+8)+bw/2}" y="112" font-size="10.5" text-anchor="middle" fill="var(--mute)">${k+1}</text></g>`}).join('')}</svg><p class="small mute">Number of real IR instructions (labels and markers not counted). It can go <i>up</i>: unrolling adds code on purpose.</p>`;
+  const ev=S.events.map(id=>F.optimizations.find(e=>e.id===id)).filter(Boolean);
+  $('#tmEvents').innerHTML=ev.length?ev.map(e=>`<div class="msg ${e.status==='APPLIED'?'ok':e.status==='REJECTED'?'bad':'warn'} small"><span class="pill ${e.status==='APPLIED'?'ok':e.status==='REJECTED'?'bad':'warn'}">${e.status}</span> <b>${esc(e.pass)}</b> <span class="mute">${esc(e.target)}</span><br>${esc(String(e.reason).split('  |  ')[0].slice(0,260))}</div>`).join(''):'<p class="mute small">No decisions at this stage — this is the starting point.</p>';
+  tmHover()}
+function tmHover(){const root=$('#s-opt');root.querySelectorAll('[data-line]').forEach(el=>{el.onmouseenter=()=>{const ln=el.dataset.line;if(!ln)return;root.querySelectorAll(`[data-line="${ln}"]`).forEach(x=>x.classList.add('hl'))};el.onmouseleave=()=>root.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'))})}
+$('#tmStages').onclick=e=>{const b=e.target.closest('button');if(b){tmStop();TM.i=+b.dataset.k;tmRender()}};
+const tmGo={at:()=>TM.i,set:v=>{const F=curFn();if(!F)return;TM.i=Math.max(0,Math.min(F.snapshots.length-1,v));tmRender()}};
+$('#tmNext').onclick=()=>tmGo.set(TM.i+1);$('#tmPrev').onclick=()=>tmGo.set(TM.i-1);$('#tmSlider').oninput=e=>{tmStop();tmGo.set(+e.target.value)};
+const tmStop=player($('#tmPlay'),()=>curFn()?curFn().snapshots.length:0,tmGo,()=>1400);
+
+/* ============================================================ PHASE 4 : register colouring replay */
+let RG={steps:[],i:0};
+function colorSteps(nodes,edges,K,cost){const adj=new Map(nodes.map(n=>[n,new Set()]));edges.forEach(([a,b])=>{if(adj.has(a)&&adj.has(b)){adj.get(a).add(b);adj.get(b).add(a)}});
+  const steps=[{t:'build'}],rem=new Set(nodes),stack=[];const deg=n=>[...adj.get(n)].filter(m=>rem.has(m)).length;
+  while(rem.size){let pick=null,dp=1e9;for(const n of rem){const d=deg(n);if(d<K&&d<dp){pick=n;dp=d}}
+    if(pick){steps.push({t:'simplify',n:pick,deg:dp});stack.push({n:pick,opt:false})}
+    else{let best=1e18;for(const n of rem){const c=(cost[n]||1)/Math.max(1,deg(n));if(c<best){best=c;pick=n}}steps.push({t:'candidate',n:pick,deg:deg(pick),cost:cost[pick]||1});stack.push({n:pick,opt:true})}
+    rem.delete(pick)}
+  const col=new Map(),spilled=[];
+  for(let k=stack.length-1;k>=0;k--){const{n,opt}=stack[k];const used=new Set();adj.get(n).forEach(m=>{if(col.has(m))used.add(col.get(m))});let c=0;while(c<K&&used.has(c))c++;
+    if(c<K){col.set(n,c);steps.push({t:'color',n,c,used:[...used].sort((a,b)=>a-b),opt})}else{spilled.push(n);steps.push({t:'spill',n,used:[...used].sort((a,b)=>a-b)})}}
+  steps.push({t:'done'});return{steps,col,spilled,adj}}
+const PAL=['#4fd1c5','#8b7bff','#fbbf24','#f472b6','#60a5fa','#4ade80','#fb923c','#c084fc','#22d3ee','#f87171','#a3e635','#e879f9'];
+function regBuild(){rgStop();const F=curFn();
+  if(!F){$('#rGraph').innerHTML='';$('#rMsg').textContent='Fix the compile error above.';$('#rStack').innerHTML='';return}
+  const which=document.querySelector('input[name=rv]:checked').value,ra=F.regalloc[which],K=+$('#rK').value;$('#rKv').textContent=K;
+  let nodes=ra.nodes.filter(n=>!(ra.vecNodes||[]).includes(n));const showT=$('#rTemps').checked;
+  const autoHide=nodes.length>22&&!showT;if(!showT||nodes.length>70)nodes=nodes.filter(n=>n[0]!=='%'||(!autoHide&&nodes.length<=22));
+  if(!showT&&nodes.filter(n=>n[0]==='%').length===0&&ra.nodes.length>nodes.length&&false){}
+  if(!showT)nodes=nodes.filter(n=>n[0]!=='%');
+  if(nodes.length>70){const dg={};ra.interference.forEach(([a,b])=>{dg[a]=(dg[a]||0)+1;dg[b]=(dg[b]||0)+1});nodes=nodes.sort((x,y)=>(dg[y]||0)-(dg[x]||0)).slice(0,70)}
+  const r=colorSteps(nodes,ra.interference,K,ra.cost||{});RG={steps:r.steps,i:0,nodes,edges:ra.interference.filter(([a,b])=>nodes.includes(a)&&nodes.includes(b)),K,res:r,ra,which,total:ra.nodes.length};
+  $('#rSlider').max=r.steps.length-1;rgShow()}
+function rgShow(){const{steps,nodes,edges,K,res}=RG;if(!steps.length)return;const i=RG.i;$('#rSlider').value=i;$('#rLbl').textContent=`step ${i+1} / ${steps.length}`;
+  const removed=new Set(),stack=[],color=new Map(),spill=new Set();let cur=null,cand=new Set(),curStep=steps[i];
+  for(let k=0;k<=i;k++){const s=steps[k];if(s.t==='simplify'){removed.add(s.n);stack.push({n:s.n,opt:false})}if(s.t==='candidate'){removed.add(s.n);stack.push({n:s.n,opt:true});cand.add(s.n)}
+    if(s.t==='color'){color.set(s.n,s.c);const j=stack.findIndex(x=>x.n===s.n);if(j>=0)stack[j].done=true}if(s.t==='spill'){spill.add(s.n);const j=stack.findIndex(x=>x.n===s.n);if(j>=0)stack[j].done=true}}
+  cur=curStep.n||null;
+  const n=nodes.length,R=Math.max(80,Math.min(240,n*13)),W=2*R+150,Cx=W/2,Cy=W/2,rad=n>36?10:n>20?13:16;const pos={};nodes.forEach((x,k)=>{const a=-Math.PI/2+2*Math.PI*k/Math.max(1,n);pos[x]={x:Cx+R*Math.cos(a),y:Cy+R*Math.sin(a)}});
+  let svg=`<svg viewBox="0 0 ${W} ${W}" width="${W}">`;
+  edges.forEach(([a,b])=>{const dim=removed.has(a)||removed.has(b);svg+=`<line x1="${pos[a].x}" y1="${pos[a].y}" x2="${pos[b].x}" y2="${pos[b].y}" stroke="${(a===cur||b===cur)?'var(--warn)':'var(--mute)'}" stroke-width="${(a===cur||b===cur)?2.4:1.2}" opacity="${dim&&a!==cur&&b!==cur?.12:.65}"/>`});
+  nodes.forEach(x=>{const p=pos[x];let fill='var(--panel2)',stroke='var(--line)',op=1,mark='';
+    if(removed.has(x)){op=.45;stroke='var(--acc2)'}if(color.has(x)){fill=PAL[color.get(x)%12];op=1;stroke='var(--ink)'}if(spill.has(x)){fill='var(--badbg)';stroke='var(--bad)';op=1;mark='✕'}
+    if(cand.has(x)&&!color.has(x)&&!spill.has(x)){stroke='var(--warn)'}if(x===cur)stroke='var(--warn)';
+    svg+=`<g opacity="${op}">${mark?`<text x="${p.x}" y="${p.y+rad+13}" font-size="10.5" text-anchor="middle" style="fill:var(--bad)">${esc(x.replace(/^%/,''))}</text>`:''}<circle cx="${p.x}" cy="${p.y}" r="${rad}" fill="${fill}" stroke="${stroke}" stroke-width="${x===cur?4:2}"/><text x="${p.x}" y="${p.y+4}" font-size="${rad>12?10.5:9}" text-anchor="middle" style="fill:${color.has(x)?'#06121a':'var(--ink)'}">${esc(mark||(x.length>6?x.slice(0,5)+'…':x.replace(/^%/,'')))}</text></g>`});
+  $('#rGraph').innerHTML=svg+'</svg>';
+  $('#rLegend').innerHTML=Array.from({length:K},(_,c)=>`<span><em style="background:${PAL[c%12]}"></em>R${c}</span>`).join('')+'<span><em style="background:var(--badbg);border:2px solid var(--bad)"></em>spilled</span><span><em style="border:2px solid var(--acc2);opacity:.5"></em>on stack</span>';
+  let m='';const s=curStep;
+  if(s.t==='build')m=`<b>Build</b> the interference graph: ${nodes.length} variables, ${edges.length} edges (two variables are joined when they are alive at the same time). K = ${K} registers.`;
+  if(s.t==='simplify')m=`<b>Simplify:</b> <span class="kbd">${esc(s.n)}</span> has only ${s.deg} neighbour(s) left, which is fewer than K=${K}, so it can <i>always</i> be coloured later. Remove it and push it on the stack.`;
+  if(s.t==='candidate')m=`<b>Potential spill:</b> every remaining node has ≥ K=${K} neighbours. The compiler picks <span class="kbd">${esc(s.n)}</span> (lowest cost / degree = use-count ÷ ${s.deg}) and pushes it <i>optimistically</i> — it might still get a colour.`;
+  if(s.t==='color')m=`<b>Select:</b> pop <span class="kbd">${esc(s.n)}</span>. Neighbours already use ${s.used.length?s.used.map(c=>'R'+c).join(', '):'no colours'}, so it gets <b style="color:${PAL[s.c%12]}">R${s.c}</b>${s.opt?' — the optimistic guess worked!':''}.`;
+  if(s.t==='spill')m=`<b>Actual spill:</b> <span class="kbd">${esc(s.n)}</span> has neighbours using all ${RG.K} colours (${s.used.map(c=>'R'+c).join(', ')}). It must live in memory ([sp+n]) and be loaded/stored around each use.`;
+  if(s.t==='done')m=`<b>Done.</b> ${res.col.size} variables in registers, ${res.spilled.length} spilled. Registers used: ${new Set([...res.col.values()]).size} of ${RG.K}.`;
+  $('#rMsg').className='msg'+(s.t==='spill'?' bad':s.t==='done'?(res.spilled.length?' warn':' ok'):'');$('#rMsg').innerHTML=m;
+  const used=new Set([...color.values()]);
+  $('#rStack').innerHTML=`<div class="small mute">Stack (top first):</div><div>${[...stack].reverse().map(x=>`<span class="tk" style="${x.opt?'border-color:var(--warn)':''}${x.done?';opacity:.5':''}">${esc(x.n)}${x.opt?' ⚠':''}</span>`).join('')||'<span class="mute small">empty</span>'}</div>
+   <h2 style="margin-top:12px">Result so far</h2><div class="small">in registers: <b>${color.size}</b> · spilled: <b style="color:var(--bad)">${spill.size}</b> · registers used: <b>${used.size}</b></div>
+   <p class="small mute">Graph shows ${nodes.length} of ${RG.total} variables${$('#rTemps').checked?'':' (compiler temporaries hidden — tick “show compiler temporaries”)'}. <br>Engine's own allocation at K=${RG.ra.K}: max live ${RG.ra.pressure}, spills ${RG.ra.spills.length}.</p>`}
+const rgGo={at:()=>RG.i,set:v=>{RG.i=Math.max(0,Math.min(RG.steps.length-1,v));rgShow()}};
+$('#rNext').onclick=()=>rgGo.set(RG.i+1);$('#rPrev').onclick=()=>rgGo.set(RG.i-1);$('#rReset').onclick=()=>rgGo.set(0);$('#rSlider').oninput=e=>{rgStop();rgGo.set(+e.target.value)};
+const rgStop=player($('#rPlay'),()=>RG.steps.length,rgGo,()=>900);
+$('#rK').oninput=regBuild;$('#rTemps').onchange=regBuild;document.querySelectorAll('input[name=rv]').forEach(r=>r.onchange=regBuild);
+</script>
+</body>
+</html>
